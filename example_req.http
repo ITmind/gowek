@@ -1,0 +1,26 @@
+POST http://localhost:1323/api/token
+Content-Type: application/x-www-form-urlencoded
+
+user=admin&pass=admin
+
+> {% client.global.set("auth_token", response.body.token); %}
+###
+GET http://localhost:1323/api/users
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+#Authorization: Basic admin admin
+
+###
+GET http://localhost:1323/api/notes
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+#Authorization: Basic admin admin
+
+###
+POST http://localhost:1323/api/notes
+Content-Type: application/json
+
+{
+  "text": "second",
+  "Completed": false
+}

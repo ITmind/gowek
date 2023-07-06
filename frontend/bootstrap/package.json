@@ -1,0 +1,27 @@
+{
+  "devDependencies": {
+    "@mojojoejo/vite-plugin-purgecss": "^1.1.0",
+    "sass": "^1.62.1",
+    "vite": "^4.3.7"
+  },
+  "name": "bootstrap",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@popperjs/core": "^2.11.7",
+    "bootstrap": "^5.2.3",
+    "esbuild": "^0.17.19",
+    "nanoid": "^3.3.6",
+    "picocolors": "^1.0.0",
+    "postcss": "^8.4.23",
+    "rollup": "^3.22.0",
+    "source-map-js": "^1.0.2"
+  },
+  "scripts": {
+    "start": "vite",
+    "build": "vite build"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

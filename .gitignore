@@ -1,0 +1,7 @@
+# Default ignored files
+.idea
+node_modules
+.vscode
+HealthDiaryServerGo*
+Deploy/hds
+.env

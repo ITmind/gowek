@@ -1,0 +1,19 @@
+info:
+  contact: {}
+paths:
+  /api/notes:
+    get:
+      consumes:
+      - application/json
+      description: Get entities by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: int
+      summary: Get entities by id
+      tags:
+      - Entities
+swagger: "2.0"

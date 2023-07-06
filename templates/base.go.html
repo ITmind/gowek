@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="robots" content="NONE,NOARCHIVE"/>
+    <link href="/static/bootstrap.css" rel="stylesheet">
+    <title>Web Golang</title>
+</head>
+
+<body>
+
+<header class="p-3 text-bg-dark">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-decoration-none fs-4 text-white">Шаблон web-приложения на Golang</a>
+            </div>
+
+            <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+                <li><a class="nav-link px-2 text-white" href="/api/">API</a></li>
+                {{ if eq true .User.IsSuperuser}}
+                    <li><a class="nav-link px-2 text-white" href="#" hx-get="/admin" hx-target="#page">Админка</a></li>
+                {{ end }}
+            </ul>
+
+            <div class="col-md-3 text-end">
+                {{ if eq true .User.IsAuthenticated}}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{.User.Login}}
+                               <b class="caret"></b>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href='/logout?next=/'>Log out</a></li>
+                        </ul>
+                    </div>
+                {{ else }}
+                    <a class="btn btn-outline-light me-2" href='/login'>Login</a>
+                    <a class="btn btn-warning">Sign-up</a>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div id="page" class="container">
+{{/*        {{block "content" .}} block {{end}}*/}}
+        {{embed}}
+    </div>
+</main>
+
+<script src="/static/bootstrap.js"></script>
+<script src="https://unpkg.com/htmx.org@1.9.2" integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h" crossorigin="anonymous"></script>
+
+</body>
+</html>
