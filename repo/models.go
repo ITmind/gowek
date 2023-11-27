@@ -1,19 +1,15 @@
 package repo
 
-import (
-	"gorm.io/gorm"
-)
-
 type Note struct {
-	gorm.Model
+	ID     uint
 	Text   string
 	UserID uint
-	User   User
 }
 
 type User struct {
-	gorm.Model
-	Login string
-	Email string
-	Hash  string
+	ID      uint
+	Login   string
+	Email   string
+	Hash    string
+	IsAdmin bool
 }

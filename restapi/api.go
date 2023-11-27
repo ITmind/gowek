@@ -1,50 +1,57 @@
 package restapi
 
 import (
-	swagger "github.com/arsmn/fiber-swagger/v2"
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
-	"gowek/admin"
+	"gowek/auth"
 	"gowek/repo"
 	"net/http"
 	"strconv"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func Init(app *fiber.App) {
 
-	setJWTAuth(app)
-
-	app.Get("/docs/*", swagger.HandlerDefault)
-
 	api := app.Group("/api")
 
-	api.Post("/token", login)
-	api.Get("/users", getEntities[repo.User])
-	api.Get("/users/:id", getEntityByID[repo.User])
+	api.Get("/users", getAllUsers)
+	api.Get("/users/:login", getUser)
 	api.Post("/users", addUser)
 
 	api.Get("/notes", getNotesByUser)
-	api.Get("/notes/:id", getEntityByID[repo.Note])
+	api.Get("/notes/:id", getNote)
 	api.Post("/notes", addNote)
 }
 
-func getEntities[T repo.User | repo.Note](c *fiber.Ctx) error {
-	res := repo.GetEntities[T]()
+func getAllUsers(c *fiber.Ctx) error {
+	res, err := repo.GetAllUsers()
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, "internal DB error")
+	}
 	return c.JSON(res)
 }
 
-// getEntityByID is a function to get entities by id
-// @Summary Get entities by id
-// @Description Get entities by id
-// @Tags Entities
-// @Accept json
-// @Produce json
-// @Success 200 {int} any
-// @Router /api/notes [get]
-func getEntityByID[T repo.User | repo.Note](c *fiber.Ctx) error {
+func getUser(c *fiber.Ctx) error {
+	login := c.Params("id")
+	res, err := repo.GetUser(login)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, "internal DB error")
+	}
+	return c.JSON(res)
+}
+
+func getNote(c *fiber.Ctx) error {
+	userData := c.Locals("user")
+	if userData == nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+	user := userData.(auth.User)
+
 	i, _ := strconv.Atoi(c.Params("id"))
-	id := uint(i)
-	res := repo.GetEntity[T](id)
+	noteID := uint(i)
+	res, err := repo.GetNote(user.UserID, noteID)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, "internal DB error")
+	}
 	return c.JSON(res)
 }
 
@@ -53,7 +60,7 @@ func addNote(c *fiber.Ctx) error {
 	if userData == nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
-	user := admin.NewUserFromMap(userData.(map[string]interface{}))
+	user := userData.(auth.User)
 
 	obj := new(repo.Note)
 	if err := c.BodyParser(obj); err != nil {
@@ -61,7 +68,11 @@ func addNote(c *fiber.Ctx) error {
 	}
 	obj.ID = user.UserID
 
-	repo.AddEntity(obj)
+	err := repo.AddNote(obj)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, "internal DB error")
+	}
+
 	return c.JSON(obj)
 }
 
@@ -71,19 +82,32 @@ func getNotesByUser(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	user := getUserFromToken(userData.(*jwt.Token))
-	notes := repo.GetEntitiesByUser[repo.Note](user.UserID)
+	user := userData.(auth.User)
+
+	notes, err := repo.GetAllNotesByUser(user.UserID)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, "internal DB error")
+	}
+
 	return c.JSON(notes)
 }
 
 func addUser(c *fiber.Ctx) error {
+
+	userData := c.Locals("user")
+	if userData == nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
 
 	obj := new(repo.User)
 	if err := c.BodyParser(obj); err != nil {
 		return fiber.NewError(http.StatusBadRequest, "bad request")
 	}
 
-	repo.AddEntity(obj)
+	err := repo.AddUser(obj)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, "internal DB error")
+	}
 
 	return c.SendStatus(fiber.StatusCreated)
 }
