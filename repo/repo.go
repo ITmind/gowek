@@ -1,24 +1,27 @@
 package repo
 
 import (
+	"database/sql"
 	"log/slog"
 	"os"
 
+	"github.com/golang-migrate/migrate/v4"
+
+	sl3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var DB *sqlx.DB
-var err error
+var db *sqlx.DB
 
 func Init() {
 	initDB()
-	migrate()
+	runMigration()
 	SetupSuperuser()
 }
 
-func initDB() {
-	slog.Info("Init db...")
+func getDBName() string {
 
 	dsn := "gowek.db"
 	val, ok := os.LookupEnv("DB_URL")
@@ -26,12 +29,21 @@ func initDB() {
 		dsn = val
 	}
 
-	DB, err = sqlx.Open("sqlite3", dsn)
+	return dsn
+}
+
+func initDB() {
+	slog.Info("Init db...")
+
+	dsn := getDBName()
+
+	var err error
+	db, err = sqlx.Open("sqlite3", dsn)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	err = DB.Ping()
+	err = db.Ping()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -39,16 +51,38 @@ func initDB() {
 
 func Migrate() {
 	initDB()
-	migrate()
+	runMigration()
 }
 
-func migrate() {
-	//log.Println("Migrate...")
-	// err = DB.AutoMigrate(&User{}, &Note{})
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	//log.Println("Migrate success")
+func Close() {
+	slog.Info("Close db...")
+	err := db.DB.Close()
+	if err != nil {
+		slog.Error(err.Error())
+	}
+}
+
+func runMigration() {
+	slog.Info("Migrate...")
+
+	instance, err := sl3.WithInstance(db.DB, &sl3.Config{})
+	if err != nil {
+		panic(err)
+	}
+	m, err := migrate.NewWithDatabaseInstance("file://migrations", "sqlite3", instance)
+	//dsn := getDBName()
+	//m, err := migrate.New("file://migrations", "sqlite3://"+dsn)
+	if err != nil {
+		slog.Error(err.Error())
+		panic(err.Error())
+	}
+	m.Up()
+
+	if err != nil {
+		slog.Error(err.Error())
+		panic(err.Error())
+	}
+	slog.Info("Migrate success")
 }
 
 func SetupSuperuser() {
@@ -69,21 +103,27 @@ func SetupSuperuser() {
 	}
 
 	//если пользоатель уже есть в базе, то не создаем
-	if _, err = GetUser(superusername); err != nil {
-		slog.Error(err.Error())
+	user, err := GetUser(superusername)
+	if err != nil && err != sql.ErrNoRows {
+		panic("Error create superuser: " + err.Error())
+	}
+
+	var eq = user == (User{})
+	if !eq {
 		return
 	}
 
 	slog.Info("Setup superuser")
 
 	superuser := User{
-		Login: superusername,
-		Email: superuseremail,
-		Hash:  superuserpass,
+		Login:   superusername,
+		Email:   superuseremail,
+		Hash:    superuserpass,
+		IsAdmin: true,
 	}
 
 	err = AddUser(&superuser)
 	if err != nil {
-		slog.Error(err.Error())
+		panic("Error create superuser: " + err.Error())
 	}
 }

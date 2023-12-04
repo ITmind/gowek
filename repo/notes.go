@@ -6,7 +6,7 @@ import (
 
 func GetAllNotesByUser(userID uint) ([]Note, error) {
 	var entities []Note
-	err := DB.Select(&entities, "SELECT * FROM notes WHERE user_id = ?", userID)
+	err := db.Select(&entities, "SELECT * FROM notes WHERE user_id = ?", userID)
 	if err != nil {
 		slog.Error(err.Error())
 		return []Note{}, err
@@ -16,7 +16,7 @@ func GetAllNotesByUser(userID uint) ([]Note, error) {
 
 func GetNote(userID uint, noteID uint) ([]Note, error) {
 	var entities []Note
-	err := DB.Select(&entities, "SELECT * FROM notes WHERE user_id = ? and id = ? ", userID, noteID)
+	err := db.Select(&entities, "SELECT * FROM notes WHERE user_id = ? and id = ? ", userID, noteID)
 	if err != nil {
 		slog.Error(err.Error())
 		return []Note{}, err
@@ -25,7 +25,7 @@ func GetNote(userID uint, noteID uint) ([]Note, error) {
 }
 
 func AddNote(note *Note) error {
-	_, err := DB.NamedExec("INSERT INTO notes (Text, UserID) VALUES (:text, :userid)", &note)
+	_, err := db.NamedExec("INSERT INTO notes (note, user_id) VALUES (:note, :user_id)", &note)
 	if err != nil {
 		slog.Error(err.Error())
 	}

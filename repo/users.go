@@ -6,7 +6,7 @@ import (
 
 func GetAllUsers() ([]User, error) {
 	var users []User
-	err := DB.Select(&users, "SELECT id FROM users ")
+	err := db.Select(&users, "SELECT id FROM users ")
 	if err != nil {
 		slog.Error(err.Error())
 		return []User{}, err
@@ -16,8 +16,8 @@ func GetAllUsers() ([]User, error) {
 }
 
 func GetUser(login string) (User, error) {
-	var user User
-	err := DB.Get(&user, "SELECT id FROM users WHERE login=? ", login)
+	user := User{}
+	err := db.Get(&user, "SELECT * FROM users WHERE login=? ", login)
 	if err != nil {
 		slog.Error(err.Error())
 		return User{}, err
@@ -27,7 +27,7 @@ func GetUser(login string) (User, error) {
 }
 
 func AddUser(user *User) error {
-	_, err := DB.NamedExec("INSERT INTO users (login, email, hash) VALUES (:login, :email, :hash)", &user)
+	_, err := db.NamedExec("INSERT INTO users (login, email, hash, isadmin) VALUES (:login, :email, :hash, :isadmin)", &user)
 	if err != nil {
 		slog.Error(err.Error())
 	}

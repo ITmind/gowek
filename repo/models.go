@@ -1,9 +1,9 @@
 package repo
 
 type Note struct {
-	ID     uint
-	Text   string
-	UserID uint
+	ID      uint
+	Note    string
+	User_id uint
 }
 
 type User struct {

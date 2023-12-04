@@ -2,20 +2,25 @@ package main
 
 import (
 	"encoding/gob"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/template/html/v2"
-	"github.com/joho/godotenv"
-	"gowek/admin"
+	"gowek/auth"
 	_ "gowek/docs"
 	"gowek/repo"
 	"gowek/restapi"
 	"log"
 	"os"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/template/html/v2"
+	"github.com/joho/godotenv"
 )
 
+type Gowek struct {
+	*fiber.App
+}
+
 func init() {
-	gob.Register(admin.User{})
+	gob.Register(auth.User{})
 
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -42,7 +47,7 @@ func main() {
 
 // NewApp Создает и возвращает fiber.App
 // сделано для упрощения тестирования
-func NewApp() *fiber.App {
+func NewApp() *Gowek {
 
 	repo.Init()
 	templateEngine := html.New("templates", ".go.html")
@@ -53,7 +58,7 @@ func NewApp() *fiber.App {
 	})
 
 	//систему аутентификации инициализируем первой, что бы ее middleware отрабатывало первой в стеке!
-	admin.Init(app)
+	auth.Init(app)
 	restapi.Init(app)
 	app.Use(recover.New())
 
@@ -63,6 +68,10 @@ func NewApp() *fiber.App {
 		return c.Render("index", fiber.Map{})
 	})
 
-	return app
+	return &Gowek{app}
 
+}
+
+func (app *Gowek) Close() {
+	repo.Close()
 }
